@@ -14,6 +14,7 @@ const Relatorio: React.FC = () => {
   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
 
   useEffect(() => {
+    document.title = "Prova - Relatório";
     const getPessoas = async () => {
       try {
         const data = await relatorioPessoas();
