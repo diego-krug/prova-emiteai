@@ -11,7 +11,7 @@ const Relatorio: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [recordsPerPage, setRecordsPerPage] = useState<number>(20);
+  const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
 
   useEffect(() => {
     const getPessoas = async () => {
