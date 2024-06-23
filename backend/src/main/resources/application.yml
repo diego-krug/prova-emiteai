@@ -17,6 +17,19 @@ spring:
     resources:
       static-locations: classpath:/static/
 
+  rabbitmq:
+    addresses: amqps://wiotfugq:r8SA1v3WIS61yvI199Qc5eAuxqNtopis@jackal.rmq.cloudamqp.com/wiotfugq
+    username: wiotfugq
+    password: r8SA1v3WIS61yvI199Qc5eAuxqNtopis
+    virtual-host: wiotfugq
+    queues:
+      relatorio: emiteai_relatorio
+      cadastro: emiteai_cadastro
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+
 server:
   port: 8080
 

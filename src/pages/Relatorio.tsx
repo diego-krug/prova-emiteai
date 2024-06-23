@@ -1,10 +1,10 @@
-// src/pages/Relatorio.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Paper, Button, IconButton, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-import { relatorioPessoas } from '../services/api';
-import { CSVLink } from 'react-csv';
+import { relatorioPessoas, solicitarGeracaoRelatorio } from '../services/api';
 import { ArrowBack, ArrowForward, FirstPage, LastPage } from '@mui/icons-material';
 import { SelectChangeEvent } from '@mui/material';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
 
 const Relatorio: React.FC = () => {
   const [pessoas, setPessoas] = useState<any[]>([]);
@@ -12,6 +12,8 @@ const Relatorio: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
+  const [filePath, setFilePath] = useState<string | null>(null);
+  const stompClientRef = useRef<Client | null>(null);
 
   useEffect(() => {
     document.title = "Prova - Relatório";
@@ -27,6 +29,42 @@ const Relatorio: React.FC = () => {
     };
 
     getPessoas();
+  }, []);
+
+  useEffect(() => {
+    const socket = new SockJS('/ws');
+    const stompClient = new Client({
+      webSocketFactory: () => socket as WebSocket,
+      debug: function (str) {
+        console.log(str);
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+    stompClientRef.current = stompClient;
+
+    stompClient.onConnect = () => {
+      stompClient.subscribe('/topic/reportStatus', (message) => {
+        if (message.body) {
+          setFilePath(encodeURIComponent(message.body));
+        }
+      });
+    };
+
+    stompClient.onStompError = (frame) => {
+      console.error('Broker reported error: ' + frame.headers['message']);
+      console.error('Additional details: ' + frame.body);
+    };
+
+    stompClient.activate();
+
+    return () => {
+      if (stompClientRef.current) {
+        stompClientRef.current.deactivate();
+      }
+    };
   }, []);
 
   const generateCSVData = () => {
@@ -68,6 +106,17 @@ const Relatorio: React.FC = () => {
 
   const currentPageData = pessoas.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage);
 
+  const handleGenerateReport = async () => {
+    setLoading(true);
+    try {
+      await solicitarGeracaoRelatorio();
+    } catch (error) {
+      setError('Erro ao solicitar a geração do relatório.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -87,16 +136,27 @@ const Relatorio: React.FC = () => {
   return (
     <Box sx={{ padding: 3 }}>
       <Typography variant="h4" gutterBottom>Relatório de Pessoas</Typography>
-      <Button variant="contained" color="primary" sx={{ mb: 2 }}>
-        <CSVLink
-          data={generateCSVData()}
-          filename={"relatorio_pessoas.csv"}
-          style={{ textDecoration: 'none', color: 'white' }}
-        >
-          Baixar CSV
-        </CSVLink>
+      <Button variant="contained" color="primary" onClick={handleGenerateReport}>
+        Gerar Relatório CSV
       </Button>
-      <Paper>
+      {filePath && (
+        <Button
+          variant="contained"
+          color="secondary"
+          sx={{ ml: 2 }}
+          onClick={() => {
+            const link = document.createElement('a');
+            link.href = `/relatorio/downloadRelatorio?filePath=${filePath}`;
+            link.setAttribute('download', 'relatorio.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }}
+        >
+          Download Relatório
+        </Button>
+      )}
+      <Paper sx={{ mt: 3 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -123,19 +183,19 @@ const Relatorio: React.FC = () => {
         </Table>
       </Paper>
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-      <FormControl variant="outlined" sx={{ mb: 2, minWidth: 120 }}>
-        <InputLabel>Qtde Registros</InputLabel>
-        <Select
-          value={recordsPerPage}
-          onChange={handleRecordsPerPageChange}
-          label="Registros por página"
-        >
-          <MenuItem value={10}>10</MenuItem>
-          <MenuItem value={20}>20</MenuItem>
-          <MenuItem value={50}>50</MenuItem>
-          <MenuItem value={100}>100</MenuItem>
-        </Select>
-      </FormControl>
+        <FormControl variant="outlined" sx={{ mb: 2, minWidth: 120 }}>
+          <InputLabel>Qtde Registros</InputLabel>
+          <Select
+            value={recordsPerPage}
+            onChange={handleRecordsPerPageChange}
+            label="Registros por página"
+          >
+            <MenuItem value={10}>10</MenuItem>
+            <MenuItem value={20}>20</MenuItem>
+            <MenuItem value={50}>50</MenuItem>
+            <MenuItem value={100}>100</MenuItem>
+          </Select>
+        </FormControl>
         <IconButton onClick={handleFirstPage} disabled={currentPage === 1}>
           <FirstPage />
         </IconButton>
