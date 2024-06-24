@@ -9,5 +9,5 @@ Realizar o restore do arquivo prova.sql que está compactado como prova.rar na r
 ### `./mvnw spring-boot:run`
 
 Aplicação ficará disponível em
-Abrir [http://localhost:8080](http://localhost:8080)
+[http://localhost:8080](http://localhost:8080)
 
