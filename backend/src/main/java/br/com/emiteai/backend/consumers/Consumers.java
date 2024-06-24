@@ -26,11 +26,8 @@ public class Consumers {
     private NotificationController notificationController;
 
     @RabbitListener(queues = "emiteai-cadastro")
-    public void listenCadastro(PessoaDTO pessoaDTO) {
-        Pessoa pessoa = new Pessoa();
-        BeanUtils.copyProperties(pessoaDTO, pessoa);
+    public void processarCadastro(PessoaDTO pessoaDTO) {
         pessoaService.criarPessoa(pessoaDTO);
-        System.out.println("Pessoa Criada com sucesso! Nome: " + pessoaDTO.getNome());
     }
 
     @RabbitListener(queues = "emiteai-relatorio")

@@ -18,11 +18,20 @@ public class PessoaService {
 
     private final ModelMapper modelMapper;
 
-    public PessoaDTO criarPessoa(PessoaDTO dto) {
-        Pessoa pessoa = modelMapper.map(dto, Pessoa.class);
-        pessoaRepository.save(pessoa);
+    public void criarPessoa(PessoaDTO dto) {
+        Pessoa pessoa = new Pessoa();
+        pessoa.setBairro(dto.getBairro());
+        pessoa.setCep(dto.getCep());
+        pessoa.setCidade(dto.getCidade());
+        pessoa.setComplemento(dto.getComplemento());
+        pessoa.setCpf(dto.getCpf());
+        pessoa.setEndereco(dto.getEndereco());
+        pessoa.setNome(dto.getNome());
+        pessoa.setNumero(dto.getNumero());
+        pessoa.setTelefone(dto.getTelefone());
+        pessoa.setUf(dto.getUf());
 
-        return modelMapper.map(pessoa, PessoaDTO.class);
+        pessoaRepository.save(pessoa);
     }
 
     public List<PessoaDTO> buscarTodos() {

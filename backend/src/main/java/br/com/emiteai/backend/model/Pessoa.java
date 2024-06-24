@@ -24,4 +24,11 @@ public class Pessoa {
     private String bairro;
     private String cidade;
     private String uf;
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+    }
 }
