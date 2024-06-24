@@ -13,6 +13,7 @@ const Relatorio: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [recordsPerPage, setRecordsPerPage] = useState<number>(10);
   const [filePath, setFilePath] = useState<string | null>(null);
+  const [reportStatus, setReportStatus] = useState<string | null>(null);
   const stompClientRef = useRef<Client | null>(null);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ const Relatorio: React.FC = () => {
       stompClient.subscribe('/topic/reportStatus', (message) => {
         if (message.body) {
           setFilePath(encodeURIComponent(message.body));
+          setReportStatus(null);  // Reset the report status when the report is ready
         }
       });
     };
@@ -110,6 +112,7 @@ const Relatorio: React.FC = () => {
     setLoading(true);
     try {
       await solicitarGeracaoRelatorio();
+      setReportStatus('Gerando... Aguarde...');
     } catch (error) {
       setError('Erro ao solicitar a geração do relatório.');
     } finally {
@@ -136,8 +139,8 @@ const Relatorio: React.FC = () => {
   return (
     <Box sx={{ padding: 3 }}>
       <Typography variant="h4" gutterBottom>Relatório de Pessoas</Typography>
-      <Button variant="contained" color="primary" onClick={handleGenerateReport}>
-        Gerar Relatório CSV
+      <Button variant="contained" color="primary" onClick={handleGenerateReport} disabled={reportStatus !== null}>
+        {reportStatus || 'Gerar Relatório CSV'}
       </Button>
       {filePath && (
         <Button

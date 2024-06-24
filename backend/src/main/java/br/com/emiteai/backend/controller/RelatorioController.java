@@ -24,9 +24,13 @@ public class RelatorioController {
     @Autowired
     private RelatorioService relatorioService;
 
+    @Autowired
+    private NotificationController notificationController;
+
     @GetMapping
     public ResponseEntity<Void> solicitarGeracaoRelatorio() {
         relatorioService.solicitarGeracaoRelatorioCSV();
+        notificationController.sendReportStatus("Relatório Solicitado");
         return ResponseEntity.accepted().build();
     }
 
